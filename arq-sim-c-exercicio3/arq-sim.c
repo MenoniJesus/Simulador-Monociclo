@@ -6,6 +6,8 @@
 #include "lib.h"
 #define MEMORY_SIZE 0x0100
 
+int vetorDeReg[8] = {0};
+
 //Serve só para printar bonitinho o binario
 void print_binary(uint16_t value) {
     for (int i = 15; i >= 0; i--) {
@@ -19,7 +21,7 @@ void busca(uint16_t *memory, int pc, uint16_t *instrucao){
 }
 
 void decodificacao(uint16_t instrucao, int *formato, int *opcodeR, int *destino, int *ope1, int *ope2, int *opcodeI, int *registrador, int *imediato){
-    *formato = extract_bits(instrucao, 15, 1);
+    *formato = extract_bits(instrucao, 15, 1); 
     if (*formato == 0){
         *opcodeR = extract_bits(instrucao, 9, 6);
         *destino = extract_bits(instrucao, 6, 3);
@@ -30,6 +32,87 @@ void decodificacao(uint16_t instrucao, int *formato, int *opcodeR, int *destino,
         *registrador = extract_bits(instrucao, 10, 3);
         *imediato = extract_bits(instrucao, 0, 10);
     }
+}
+
+void execucao(int formato, int opcodeR, int destino, int ope1, int ope2, int opcodeI, int registrador, int imediato, int *pc, int *isJumping){
+    switch (formato){
+        case 0:
+            switch (opcodeR){
+                case 0:
+                    printf("ADD\n");
+                    break;
+                case 1:
+                    printf("SUB\n");
+                    break;
+                case 2:
+                    printf("MUL\n");
+                    break;
+                case 3:
+                    printf("DIV\n");
+                    break;
+                case 4:
+                    printf("CMP_EQUAL\n");
+                    break;
+                case 5:
+                    printf("CMP_NEQ\n");
+                    break;
+                case 6:
+                    printf("CMP_LESS\n");
+                    break;
+                case 7:
+                    printf("CMP_GREATER\n");
+                    break;
+                case 8:
+                    printf("CMP_LESS_EQ\n");
+                    break;
+                case 9:
+                    printf("CMP_GREATER_EQ\n");
+                    break;
+                case 10:
+                    printf("AND\n");
+                    break;
+                case 11:
+                    printf("OR\n");
+                    break;
+                case 12:
+                    printf("XOR\n");
+                    break;
+                case 13:
+                    printf("SHL\n");
+                    break;
+                case 14:
+                    printf("SHR\n");
+                    break;
+                case 15:
+                    printf("LOAD\n");
+                    break;
+                case 16:
+                    printf("STORE\n");
+                    break;
+                case 63:
+                    printf("SYSCALL\n");
+                    break;
+            }
+            break;
+        
+        case 1:
+            switch (opcodeI){
+                case 0:
+                    printf("JUMP\n");
+                    break;
+                case 1:
+                    printf("JUMP_COND\n");
+                    break;
+                case 2:
+                    printf("NÃO USADO\n");
+                    break;
+                case 3:
+                    printf("MOV\n");
+                    break;
+            }
+            break;
+    }
+
 }
 
 int main (int argc, char **argv)
@@ -48,7 +131,6 @@ int main (int argc, char **argv)
     while(isRunning){
         uint16_t instrucao;
         busca(memory, pc, &instrucao);
-        //print_binary(instrucao);
 
         int formato, opcodeR, destino, ope1, ope2, opcodeI, registrador, imediato;
         decodificacao(instrucao, &formato, &opcodeR, &destino, &ope1, &ope2, &opcodeI, &registrador, &imediato);
@@ -65,16 +147,15 @@ int main (int argc, char **argv)
             printf("Opcode: %d\n", opcodeI);
             printf("Registrador: %d\n", registrador);
             printf("Imediato: %d\n", imediato);
-        } else {
-            printf("SLSLSLSLS");
         }
-        
 
+        int isJumping = 1;
 
+        execucao(formato, opcodeR, destino, ope1, ope2, opcodeI, registrador, imediato, &pc, &isJumping);
 
-        //execucao
-
-        pc++;
+        if(isJumping){
+            pc++;
+        }
 
         if(pc >= MEMORY_SIZE){
             isRunning = 0;
