@@ -2,165 +2,239 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <assert.h>
-
 #include "lib.h"
-#define MEMORY_SIZE 0x0100
+#define TAMANHO_DE_MEMORIA 0x0100
 
+int estaRodando = 1;
 int vetorDeReg[8] = {0};
 
+typedef struct Instrucao{
+    uint16_t formato;
+    uint16_t opcodeR;
+    uint16_t destino;
+    uint16_t ope1;
+    uint16_t ope2;
+    uint16_t opcodeI;
+    uint16_t registrador;
+    uint16_t imediato;
+} Instrucao;
+
 //Serve só para printar bonitinho o binario
-void print_binary(uint16_t value) {
+void print_binario(uint16_t value) {
     for (int i = 15; i >= 0; i--) {
         printf("%d", (value >> i) & 1);
     }
     printf("\n");
 }
 
-void busca(uint16_t *memory, int pc, uint16_t *instrucao){
-    *instrucao = memory[pc];
+void busca(uint16_t *memoria, int pc, uint16_t *instrucao){
+    *instrucao = memoria[pc];
 }
 
-void decodificacao(uint16_t instrucao, int *formato, int *opcodeR, int *destino, int *ope1, int *ope2, int *opcodeI, int *registrador, int *imediato){
-    *formato = extract_bits(instrucao, 15, 1); 
-    if (*formato == 0){
-        *opcodeR = extract_bits(instrucao, 9, 6);
-        *destino = extract_bits(instrucao, 6, 3);
-        *ope1 = extract_bits(instrucao, 3, 3);
-        *ope2 = extract_bits(instrucao, 0, 3);
-    } else if (*formato == 1){
-        *opcodeI = extract_bits(instrucao, 13, 2);
-        *registrador = extract_bits(instrucao, 10, 3);
-        *imediato = extract_bits(instrucao, 0, 10);
+Instrucao decodificacao(uint16_t instrucao){
+    Instrucao instrucoes;
+    instrucoes.formato = extract_bits(instrucao, 15, 1); 
+    if (instrucoes.formato == 0){
+        instrucoes.opcodeR = extract_bits(instrucao, 9, 6);
+        instrucoes.destino = extract_bits(instrucao, 6, 3);
+        instrucoes.ope1 = extract_bits(instrucao, 3, 3);
+        instrucoes.ope2 = extract_bits(instrucao, 0, 3);
+    } else if (instrucoes.formato == 1){
+        instrucoes.opcodeI = extract_bits(instrucao, 13, 2);
+        instrucoes.registrador = extract_bits(instrucao, 10, 3);
+        instrucoes.imediato = extract_bits(instrucao, 0, 10);
     }
+    return instrucoes;
 }
 
-void execucao(int formato, int opcodeR, int destino, int ope1, int ope2, int opcodeI, int registrador, int imediato, int *pc, int *isJumping){
-    switch (formato){
+void execucao(Instrucao conjuntoInstrucao, int *pc, int *vaiPular){
+    switch (conjuntoInstrucao.formato){
         case 0:
-            switch (opcodeR){
+            switch (conjuntoInstrucao.opcodeR){
                 case 0:
                     printf("ADD\n");
+                    vetorDeReg[conjuntoInstrucao.destino] = vetorDeReg[conjuntoInstrucao.ope1] + vetorDeReg[conjuntoInstrucao.ope2];
+                    printf("Resultado%d = %d\n ", conjuntoInstrucao.destino, vetorDeReg[conjuntoInstrucao.destino]);
                     break;
                 case 1:
                     printf("SUB\n");
+                    vetorDeReg[conjuntoInstrucao.destino] = vetorDeReg[conjuntoInstrucao.ope1] - vetorDeReg[conjuntoInstrucao.ope2];
+                    printf("Resultado%d = %d\n ", conjuntoInstrucao.destino, vetorDeReg[conjuntoInstrucao.destino]);
                     break;
                 case 2:
                     printf("MUL\n");
+                    vetorDeReg[conjuntoInstrucao.destino] = vetorDeReg[conjuntoInstrucao.ope1] * vetorDeReg[conjuntoInstrucao.ope2];
+                    printf("Resultado%d = %d\n ", conjuntoInstrucao.destino, vetorDeReg[conjuntoInstrucao.destino]);
                     break;
                 case 3:
                     printf("DIV\n");
+                    vetorDeReg[conjuntoInstrucao.destino] = vetorDeReg[conjuntoInstrucao.ope1] / vetorDeReg[conjuntoInstrucao.ope2];
+                    printf("Resultado%d = %d\n ", conjuntoInstrucao.destino, vetorDeReg[conjuntoInstrucao.destino]);
                     break;
                 case 4:
                     printf("CMP_EQUAL\n");
+                    if(vetorDeReg[conjuntoInstrucao.ope1] == vetorDeReg[conjuntoInstrucao.ope2]){
+                        vetorDeReg[conjuntoInstrucao.destino] = 1;
+                    } else {
+                        vetorDeReg[conjuntoInstrucao.destino] = 0;
+                    }
+                    printf("Resultado%d = %d\n ", conjuntoInstrucao.destino, vetorDeReg[conjuntoInstrucao.destino]);
                     break;
                 case 5:
                     printf("CMP_NEQ\n");
+                    if(vetorDeReg[conjuntoInstrucao.ope1] != vetorDeReg[conjuntoInstrucao.ope2]){
+                        vetorDeReg[conjuntoInstrucao.destino] = 1;
+                    } else {
+                        vetorDeReg[conjuntoInstrucao.destino] = 0;
+                    }
+                    printf("Resultado%d = %d\n ", conjuntoInstrucao.destino, vetorDeReg[conjuntoInstrucao.destino]);
                     break;
                 case 6:
                     printf("CMP_LESS\n");
+                    if(vetorDeReg[conjuntoInstrucao.ope1] < vetorDeReg[conjuntoInstrucao.ope2]){
+                        vetorDeReg[conjuntoInstrucao.destino] = 1;
+                    } else {
+                        vetorDeReg[conjuntoInstrucao.destino] = 0;
+                    }
+                    printf("Resultado%d = %d\n ", conjuntoInstrucao.destino, vetorDeReg[conjuntoInstrucao.destino]);
                     break;
                 case 7:
                     printf("CMP_GREATER\n");
+                    if(vetorDeReg[conjuntoInstrucao.ope1] > vetorDeReg[conjuntoInstrucao.ope2]){
+                        vetorDeReg[conjuntoInstrucao.destino] = 1;
+                    } else {
+                        vetorDeReg[conjuntoInstrucao.destino] = 0;
+                    }
+                    printf("Resultado%d = %d\n ", conjuntoInstrucao.destino, vetorDeReg[conjuntoInstrucao.destino]);
                     break;
                 case 8:
                     printf("CMP_LESS_EQ\n");
+                    if(vetorDeReg[conjuntoInstrucao.ope1] <= vetorDeReg[conjuntoInstrucao.ope2]){
+                        vetorDeReg[conjuntoInstrucao.destino] = 1;
+                    } else {
+                        vetorDeReg[conjuntoInstrucao.destino] = 0;
+                    }
+                    printf("Resultado%d = %d\n ", conjuntoInstrucao.destino, vetorDeReg[conjuntoInstrucao.destino]);
                     break;
                 case 9:
                     printf("CMP_GREATER_EQ\n");
+                    if(vetorDeReg[conjuntoInstrucao.ope1] >= vetorDeReg[conjuntoInstrucao.ope2]){
+                        vetorDeReg[conjuntoInstrucao.destino] = 1;
+                    } else {
+                        vetorDeReg[conjuntoInstrucao.destino] = 0;
+                    }
+                    printf("Resultado%d = %d\n ", conjuntoInstrucao.destino, vetorDeReg[conjuntoInstrucao.destino]);
                     break;
                 case 10:
                     printf("AND\n");
+                    vetorDeReg[conjuntoInstrucao.destino] = vetorDeReg[conjuntoInstrucao.ope1] && vetorDeReg[conjuntoInstrucao.ope2];
+                    printf("Resultado%d = %d\n ", conjuntoInstrucao.destino, vetorDeReg[conjuntoInstrucao.destino]);
                     break;
                 case 11:
                     printf("OR\n");
+                    vetorDeReg[conjuntoInstrucao.destino] = vetorDeReg[conjuntoInstrucao.ope1] || vetorDeReg[conjuntoInstrucao.ope2];
+                    printf("Resultado%d = %d\n ", conjuntoInstrucao.destino, vetorDeReg[conjuntoInstrucao.destino]);
                     break;
                 case 12:
                     printf("XOR\n");
+                    vetorDeReg[conjuntoInstrucao.destino] = vetorDeReg[conjuntoInstrucao.ope1] ^ vetorDeReg[conjuntoInstrucao.ope2];
+                    printf("Resultado%d = %d\n ", conjuntoInstrucao.destino, vetorDeReg[conjuntoInstrucao.destino]);
                     break;
                 case 13:
                     printf("SHL\n");
+                    vetorDeReg[conjuntoInstrucao.destino] = vetorDeReg[conjuntoInstrucao.ope1] << vetorDeReg[conjuntoInstrucao.ope2];
+                    printf("Resultado%d = %d\n ", conjuntoInstrucao.destino, vetorDeReg[conjuntoInstrucao.destino]);
                     break;
                 case 14:
                     printf("SHR\n");
+                    vetorDeReg[conjuntoInstrucao.destino] = vetorDeReg[conjuntoInstrucao.ope1] >> vetorDeReg[conjuntoInstrucao.ope2];
+                    printf("Resultado%d = %d\n ", conjuntoInstrucao.destino, vetorDeReg[conjuntoInstrucao.destino]);
                     break;
                 case 15:
                     printf("LOAD\n");
+                    vetorDeReg[conjuntoInstrucao.destino] = vetorDeReg[conjuntoInstrucao.ope1];
+                    printf("Valor do Ope1: %d\n", vetorDeReg[conjuntoInstrucao.ope1]);
+                    printf("Resultado%d = %d\n ", conjuntoInstrucao.destino, vetorDeReg[conjuntoInstrucao.destino]);
                     break;
                 case 16:
                     printf("STORE\n");
+                    vetorDeReg[conjuntoInstrucao.ope1] = vetorDeReg[conjuntoInstrucao.ope2];
+                    printf("Valor do Ope2: %d\n", vetorDeReg[conjuntoInstrucao.ope2]);
+                    printf("Resultado%d = %d\n ", conjuntoInstrucao.ope1, vetorDeReg[conjuntoInstrucao.ope1]);
                     break;
                 case 63:
                     printf("SYSCALL\n");
                     break;
             }
             break;
-        
         case 1:
-            switch (opcodeI){
+            switch (conjuntoInstrucao.opcodeI){
                 case 0:
                     printf("JUMP\n");
+                    *pc = conjuntoInstrucao.imediato;
+                    *vaiPular = 0;
+                    printf("PULOUUU\n");
                     break;
                 case 1:
                     printf("JUMP_COND\n");
-                    break;
-                case 2:
-                    printf("NÃO USADO\n");
+                    if(vetorDeReg[conjuntoInstrucao.registrador] == 1){
+                        *pc = conjuntoInstrucao.imediato;
+                        *vaiPular = 0;
+                        printf("PULOUUU\n");
+                    }
+                    printf("Resultado%d = %d\n ", conjuntoInstrucao.registrador, vetorDeReg[conjuntoInstrucao.registrador]);
                     break;
                 case 3:
                     printf("MOV\n");
+                    vetorDeReg[conjuntoInstrucao.registrador] = conjuntoInstrucao.imediato;
+                    printf("Resultado%d = %d\n ", conjuntoInstrucao.registrador, vetorDeReg[conjuntoInstrucao.registrador]);
                     break;
             }
             break;
     }
-
 }
 
-int main (int argc, char **argv)
-{
+int main (int argc, char **argv){
 	if (argc != 2) {
 		printf("usage: %s [bin_name]\n", argv[0]);
 		exit(1);
 	}
 
-    uint16_t memory[MEMORY_SIZE] = {0};
-    load_binary_to_memory(argv[1], memory, MEMORY_SIZE);
+    uint16_t memoria[TAMANHO_DE_MEMORIA] = {0};
+    load_binary_to_memory(argv[1], memoria, TAMANHO_DE_MEMORIA);
 
-    int isRunning = 1;
     int pc = 0;
 
-    while(isRunning){
+    while(estaRodando){
         uint16_t instrucao;
-        busca(memory, pc, &instrucao);
+        busca(memoria, pc, &instrucao);
 
-        int formato, opcodeR, destino, ope1, ope2, opcodeI, registrador, imediato;
-        decodificacao(instrucao, &formato, &opcodeR, &destino, &ope1, &ope2, &opcodeI, &registrador, &imediato);
+        Instrucao conjuntoInstrucao = decodificacao(instrucao);
         printf("--------------------\n");
         printf("%d\n", pc);
-        print_binary(instrucao);
-        printf("Formato: %d\n", formato);
-        if (formato == 0){
-            printf("Opcode: %d\n", opcodeR);
-            printf("Destino: %d\n", destino);
-            printf("Operando 1: %d\n", ope1);
-            printf("Operando 2: %d\n", ope2);
-        } else if (formato == 1){
-            printf("Opcode: %d\n", opcodeI);
-            printf("Registrador: %d\n", registrador);
-            printf("Imediato: %d\n", imediato);
+        print_binario(instrucao);
+        printf("Formato: %d\n", conjuntoInstrucao.formato);
+        if (conjuntoInstrucao.formato == 0){
+            printf("Opcode: %d\n", conjuntoInstrucao.opcodeR);
+            printf("Destino: %d\n", conjuntoInstrucao.destino);
+            printf("Operando 1: %d\n", conjuntoInstrucao.ope1);
+            printf("Operando 2: %d\n", conjuntoInstrucao.ope2);
+        } else if (conjuntoInstrucao.formato == 1){
+            printf("Opcode: %d\n", conjuntoInstrucao.opcodeI);
+            printf("Registrador: %d\n", conjuntoInstrucao.registrador);
+            printf("Imediato: %d\n", conjuntoInstrucao.imediato);
         }
 
-        int isJumping = 1;
+        int vaiPular = 1;
 
-        execucao(formato, opcodeR, destino, ope1, ope2, opcodeI, registrador, imediato, &pc, &isJumping);
+        execucao(conjuntoInstrucao, &pc, &vaiPular);
 
-        if(isJumping){
+        if(vaiPular){
             pc++;
         }
-
-        if(pc >= MEMORY_SIZE){
-            isRunning = 0;
+        if(pc >= TAMANHO_DE_MEMORIA){
+            estaRodando = 0;
         }
     }
-
 	return 0;
 }
