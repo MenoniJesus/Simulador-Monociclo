@@ -164,6 +164,9 @@ void execucao(Instrucao conjuntoInstrucao, int *pc, int *vaiPular){
                     break;
                 case 63:
                     printf("SYSCALL\n");
+                    if (vetorDeReg[0] == 0){
+                        estaRodando = 0;
+                    }
                     break;
             }
             break;
