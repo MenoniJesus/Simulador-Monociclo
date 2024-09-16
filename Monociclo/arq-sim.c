@@ -46,7 +46,7 @@ Instrucao decodificacao(uint16_t instrucao){
     return instrucoes;
 }
 
-void execucao(Instrucao conjuntoInstrucao, int *pc, int *vaiPular){
+void execucao(uint16_t *memoria, Instrucao conjuntoInstrucao, int *pc, int *vaiPular){
     switch (conjuntoInstrucao.formato){
         case 0:
             switch (conjuntoInstrucao.opcodeR){
@@ -151,15 +151,13 @@ void execucao(Instrucao conjuntoInstrucao, int *pc, int *vaiPular){
                     break;
                 case 15:
                     printf("LOAD\n");
-                    vetorDeReg[conjuntoInstrucao.destino] = vetorDeReg[conjuntoInstrucao.ope1];
-                    printf("Valor do Ope1: %d\n", vetorDeReg[conjuntoInstrucao.ope1]);
-                    printf("Resultado%d = %d\n ", conjuntoInstrucao.destino, vetorDeReg[conjuntoInstrucao.destino]);
+                    int endLoadRegOpe1 = vetorDeReg[conjuntoInstrucao.ope1];
+                    vetorDeReg[conjuntoInstrucao.destino] = memoria[endLoadRegOpe1]; 
                     break;
                 case 16:
                     printf("STORE\n");
-                    vetorDeReg[conjuntoInstrucao.ope1] = vetorDeReg[conjuntoInstrucao.ope2];
-                    printf("Valor do Ope2: %d\n", vetorDeReg[conjuntoInstrucao.ope2]);
-                    printf("Resultado%d = %d\n ", conjuntoInstrucao.ope1, vetorDeReg[conjuntoInstrucao.ope1]);
+                    int endStoreRegOpe1 = vetorDeReg[conjuntoInstrucao.ope1];
+                    memoria[endStoreRegOpe1] = vetorDeReg[conjuntoInstrucao.ope2];
                     break;
                 case 63:
                     printf("SYSCALL\n");
@@ -229,7 +227,7 @@ int main (int argc, char **argv){
 
         int vaiPular = 1;
 
-        execucao(conjuntoInstrucao, &pc, &vaiPular);
+        execucao(memoria, conjuntoInstrucao, &pc, &vaiPular);
 
         if(vaiPular){
             pc++;
@@ -238,5 +236,18 @@ int main (int argc, char **argv){
             estaRodando = 0;
         }
     }
+
+    printf("----------------------\n");
+
+    for(int i = 0; i < 8; i++){
+        printf("Registrador %d: %d\n", i, vetorDeReg[i]);
+    }
+
+    printf("----------------------\n");
+    
+    for(int i = 0; i <= 100; i++){
+        printf("%d ", memoria[i]);
+    }
+    printf("\n");
 	return 0;
 }
