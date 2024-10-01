@@ -153,11 +153,13 @@ void execucao(uint16_t *memoria, Instrucao conjuntoInstrucao, int *pc, int *vaiP
                     printf("LOAD\n");
                     int endLoadRegOpe1 = vetorDeReg[conjuntoInstrucao.ope1];
                     vetorDeReg[conjuntoInstrucao.destino] = memoria[endLoadRegOpe1]; 
+                    printf("Resultado%d = %d\n ", conjuntoInstrucao.destino, vetorDeReg[conjuntoInstrucao.destino]);
                     break;
                 case 16:
                     printf("STORE\n");
                     int endStoreRegOpe1 = vetorDeReg[conjuntoInstrucao.ope1];
                     memoria[endStoreRegOpe1] = vetorDeReg[conjuntoInstrucao.ope2];
+                    printf("Resultado%d = %d\n ", conjuntoInstrucao.ope1, vetorDeReg[conjuntoInstrucao.ope2]);
                     break;
                 case 63:
                     printf("SYSCALL\n");
