@@ -13,6 +13,6 @@ Para compilar o projeto, utilize o comando abaixo no terminal do MSYS2:
 
 O comando acima gera o executável arq-sim.exe. Para rodar o simulador com um arquivo binário de teste, utilize:
 
-`./arq-sim.exe testes/count.bin`
+`./arq-sim.exe testes/perfect-squares.bin`
 
-O arquivo `count.bin` pode ser substituído por qualquer outro arquivo binário disponível na pasta Testes.
+O arquivo `perfect-squares.bin` pode ser substituído por qualquer outro arquivo binário disponível na pasta Testes.
