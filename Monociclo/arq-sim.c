@@ -7,6 +7,8 @@
 
 int estaRodando = 1;
 int vetorDeReg[8] = {0};
+int pc = 0;
+int vaiPular = 1;
 
 typedef struct Instrucao{
     uint16_t formato;
@@ -33,7 +35,7 @@ void busca(uint16_t *memoria, int pc, uint16_t *instrucao){
 Instrucao decodificacao(uint16_t instrucao){
     Instrucao instrucoes;
     instrucoes.formato = extract_bits(instrucao, 15, 1); 
-    if (instrucoes.formato == 0){
+    if(instrucoes.formato == 0){
         instrucoes.opcodeR = extract_bits(instrucao, 9, 6);
         instrucoes.destino = extract_bits(instrucao, 6, 3);
         instrucoes.ope1 = extract_bits(instrucao, 3, 3);
@@ -46,7 +48,9 @@ Instrucao decodificacao(uint16_t instrucao){
     return instrucoes;
 }
 
-void execucao(uint16_t *memoria, Instrucao conjuntoInstrucao, int *pc, int *vaiPular){
+void execucao(uint16_t *memoria, Instrucao conjuntoInstrucao){
+    vaiPular = 1;
+    
     switch (conjuntoInstrucao.formato){
         case 0:
             switch (conjuntoInstrucao.opcodeR){
@@ -163,7 +167,7 @@ void execucao(uint16_t *memoria, Instrucao conjuntoInstrucao, int *pc, int *vaiP
                     break;
                 case 63:
                     printf("SYSCALL\n");
-                    if (vetorDeReg[0] == 0){
+                    if(vetorDeReg[0] == 0){
                         estaRodando = 0;
                     }
                     break;
@@ -173,15 +177,15 @@ void execucao(uint16_t *memoria, Instrucao conjuntoInstrucao, int *pc, int *vaiP
             switch (conjuntoInstrucao.opcodeI){
                 case 0:
                     printf("JUMP\n");
-                    *pc = conjuntoInstrucao.imediato;
-                    *vaiPular = 0;
+                    pc = conjuntoInstrucao.imediato;
+                    vaiPular = 0;
                     printf("PULOUUU\n");
                     break;
                 case 1:
                     printf("JUMP_COND\n");
                     if(vetorDeReg[conjuntoInstrucao.registrador] == 1){
-                        *pc = conjuntoInstrucao.imediato;
-                        *vaiPular = 0;
+                        pc = conjuntoInstrucao.imediato;
+                        vaiPular = 0;
                         printf("PULOUUU\n");
                     }
                     printf("Resultado%d = %d\n ", conjuntoInstrucao.registrador, vetorDeReg[conjuntoInstrucao.registrador]);
@@ -197,15 +201,13 @@ void execucao(uint16_t *memoria, Instrucao conjuntoInstrucao, int *pc, int *vaiP
 }
 
 int main (int argc, char **argv){
-	if (argc != 2) {
+	if(argc != 2) {
 		printf("usage: %s [bin_name]\n", argv[0]);
 		exit(1);
 	}
 
     uint16_t memoria[TAMANHO_DE_MEMORIA] = {0};
     load_binary_to_memory(argv[1], memoria, TAMANHO_DE_MEMORIA);
-
-    int pc = 0;
 
     while(estaRodando){
         uint16_t instrucao;
@@ -216,7 +218,7 @@ int main (int argc, char **argv){
         printf("%d\n", pc);
         print_binario(instrucao);
         printf("Formato: %d\n", conjuntoInstrucao.formato);
-        if (conjuntoInstrucao.formato == 0){
+        if(conjuntoInstrucao.formato == 0){
             printf("Opcode: %d\n", conjuntoInstrucao.opcodeR);
             printf("Destino: %d\n", conjuntoInstrucao.destino);
             printf("Operando 1: %d\n", conjuntoInstrucao.ope1);
@@ -227,9 +229,7 @@ int main (int argc, char **argv){
             printf("Imediato: %d\n", conjuntoInstrucao.imediato);
         }
 
-        int vaiPular = 1;
-
-        execucao(memoria, conjuntoInstrucao, &pc, &vaiPular);
+        execucao(memoria, conjuntoInstrucao);
 
         if(vaiPular){
             pc++;
