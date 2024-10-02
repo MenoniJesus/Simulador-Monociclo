@@ -1,4 +1,4 @@
-## Simulador de Monociclo
+## Simulador Monociclo
 Este projeto é um simulador de monociclo desenvolvido para a disciplina de Arquitetura de Computadores. O simulador foi criado com base em instruções fornecidas pelo professor.
 
 Tecnologias Utilizadas:
