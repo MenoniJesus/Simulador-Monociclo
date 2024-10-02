@@ -21,8 +21,8 @@ typedef struct Instrucao{
     uint16_t imediato;
 } Instrucao;
 
-void print_binario(uint16_t value) {
-    for (int i = 15; i >= 0; i--) {
+void print_binario(uint16_t value){
+    for (int i = 15; i >= 0; i--){
         printf("%d", (value >> i) & 1);
     }
     printf("\n");
@@ -201,7 +201,7 @@ void execucao(uint16_t *memoria, Instrucao conjuntoInstrucao){
 }
 
 int main (int argc, char **argv){
-	if(argc != 2) {
+	if(argc != 2){
 		printf("usage: %s [bin_name]\n", argv[0]);
 		exit(1);
 	}
@@ -240,13 +240,10 @@ int main (int argc, char **argv){
     }
 
     printf("----------------------\n");
-
     for(int i = 0; i < 8; i++){
         printf("Registrador %d: %d\n", i, vetorDeReg[i]);
     }
-
     printf("----------------------\n");
-    
     for(int i = 0; i <= 100; i++){
         printf("%d ", memoria[i]);
     }
